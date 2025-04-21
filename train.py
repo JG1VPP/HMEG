@@ -5,6 +5,7 @@ import math
 import os
 import random
 from collections import defaultdict
+from mmengine import Config
 
 import numpy as np
 import torch
@@ -22,11 +23,13 @@ from hmeg.model.metrics import jaccard
 from mmengine.runner import Runner
 
 if __name__ == "__main__":
+    config = Config.fromfile("config.py")
 
     train = CROHME(
         npy_path="datasets/crohme2019/link_npy",
         img_path="datasets/crohme2019/Train_imgs",
-        pipeline=None, test_mode=False
+        pipeline=None,
+        test_mode=False,
     )
 
     #    train_dataloader = Runner.build_dataloader(dict(

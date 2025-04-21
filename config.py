@@ -1,15 +1,21 @@
 train = dict(
-    type="CROHME",
-    npy_path="datasets/crohme2019/link_npy",
-    img_path="datasets/crohme2019/Train_imgs",
-    pipeline=[
-        dict(type="LoadImageFromFile", to_float32=True),
-        dict(type="Normalize", mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]),
-        dict(type="Resize", scale=(256, 256), keep_ratio=True),
-        dict(type="Pad", size=(256, 256), pad_val=1),
-        dict(type="ImageToTensor", keys=["img"]),
-    ],
-    test_mode=False,
+    batch_size=8,
+    num_workers=8,
+    dataset=dict(
+        type="CROHME",
+        npy_path="datasets/crohme2019/link_npy",
+        img_path="datasets/crohme2019/Train_imgs",
+        pipeline=[
+            dict(type="LoadImageFromFile", to_float32=True),
+            dict(
+                type="Normalize", mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]
+            ),
+            dict(type="Resize", scale=(256, 256), keep_ratio=True),
+            dict(type="Pad", size=(256, 256), pad_val=1),
+            dict(type="ImageToTensor", keys=["img"]),
+        ],
+        test_mode=False,
+    ),
 )
 
 

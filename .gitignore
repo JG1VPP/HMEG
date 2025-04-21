@@ -1,0 +1,13 @@
+.*
+__pycache__/
+*.egg-info/
+*.egg
+*.pth
+*.pt
+*.xz
+build/
+!.gitignore
+!.github/
+/datasets/
+/weight/
+Train_symlg*/

@@ -69,7 +69,7 @@ class LG2Graph(object):
         return obj_csv, rel_csv
 
     def to_graph(self, obj_csv, rel_csv):
-        node_types = obj_csv['node_type'].to_numpy()
+        node_types = obj_csv['node_type'].to_numpy(dtype=int)
         from_node = rel_csv['from_node'].to_numpy().reshape(1, -1)
         to_node = rel_csv['to_node'].to_numpy().reshape(1, -1)
         edge_types = rel_csv['edge_type'].to_numpy()

@@ -129,7 +129,6 @@ def gen_rand_noise(n_node, dim, device):
 
 if __name__ == "__main__":
     from hmeg.data import imagenet_deprocess_batch
-
     from train_image_generator import parser
 
     args = parser.parse_args()

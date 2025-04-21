@@ -230,39 +230,39 @@ vocab = dict(
 )
 
 model = dict(
-    type="Sg2ImModel",
-    vocab=vocab,
-    image_size=(256, 256),
-    embedding_dim=128,
-    gconv_dim=128,
-    gconv_hidden_dim=512,
-    gconv_num_layers=5,
-    mlp_normalization="none",
-    refinement_dims=(1024, 512, 256, 128, 64),
-    normalization="batch",
-    activation="leakyrelu-0.2",
-    mask_size=16,
-    layout_noise_dim=32,
+    type="GAN",
+    gen=dict(
+        type="Sg2ImModel",
+        vocab=vocab,
+        image_size=(256, 256),
+        embedding_dim=128,
+        gconv_dim=128,
+        gconv_hidden_dim=512,
+        gconv_num_layers=5,
+        mlp_normalization="none",
+        refinement_dims=(1024, 512, 256, 128, 64),
+        normalization="batch",
+        activation="leakyrelu-0.2",
+        mask_size=16,
+        layout_noise_dim=32,
+    ),
+    img=dict(
+        type="PatchDiscriminator",
+        arch="C4-64-2,C4-128-2,C4-256-2",
+        normalization="batch",
+        activation="leakyrelu-0.2",
+        padding="valid",
+    ),
+    obj=dict(
+        type="AcCropDiscriminator",
+        vocab=vocab,
+        arch="C4-64-2,C4-128-2,C4-256-2",
+        normalization="batch",
+        activation="leakyrelu-0.2",
+        padding="valid",
+        object_size=32,
+    ),
 )
-
-img_discriminator = dict(
-    type="PatchDiscriminator",
-    arch=("C4-64-2", "C4-128-2", "C4-256-2"),
-    normalization="batch",
-    activation="leakyrelu-0.2",
-    padding="valid",
-)
-
-obj_discriminator = dict(
-    type="AcCropDiscriminator",
-    vocab=vocab,
-    arch=("C4-64-2", "C4-128-2", "C4-256-2"),
-    normalization="batch",
-    activation="leakyrelu-0.2",
-    padding="valid",
-    object_size=32,
-)
-
 
 train_dataloader = dict(
     batch_size=8,

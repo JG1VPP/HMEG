@@ -1,13 +1,15 @@
 import os
 from pathlib import Path
+
 import numpy as np
 import torch
 import torchvision.transforms as T
-from PIL import Image
 from mmengine.dataset import BaseDataset
-from hmeg.model.layout import boxes_to_layout_matrix
 from mmengine.fileio import list_dir_or_file
 from mmengine.registry import DATASETS
+from PIL import Image
+
+from hmeg.model.layout import boxes_to_layout_matrix
 
 
 def box2layout(boxes, img_size=(256, 256)):
@@ -30,7 +32,7 @@ class CROHME(BaseDataset):
             suffix=".npy",
             recursive=True,
         )
-        
+
         return list(map(self.load_file, files))
 
     def load_file(self, name):

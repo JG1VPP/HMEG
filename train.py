@@ -13,22 +13,28 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from hmeg.data import imagenet_deprocess_batch
-from hmeg.data.crohme import CROHMELabelGraphDataset, crohme_collate_fn
+from hmeg.data.crohme import CROHME
 from hmeg.model.discriminators import AcCropDiscriminator, PatchDiscriminator
 from hmeg.model.generator import Sg2ImModel
 from hmeg.model.losses import get_gan_losses
 from hmeg.model.metrics import jaccard
 
-if __name__ == "__main__":
-    CROHME_DIR = os.path.expanduser("datasets/crohme2019")
-    
-    with open(os.path.join(CROHME_DIR, "vocab.json")) as f:
-        vocab = json.load(f)
-    nc = len(vocab["object_idx_to_name"])
-    npy_dir = os.path.join(CROHME_DIR, "link_npy")
-    names = [name[:-4] for name in os.listdir(npy_dir)]
+from mmengine.runner import Runner
 
-    train = CROHMELabelGraphDataset(CROHME_DIR, names[:-500], nc=nc, image_size=(256, 256))
-    valid = CROHMELabelGraphDataset(CROHME_DIR, names[-500:], nc=nc, image_size=(256, 256))
-    
+if __name__ == "__main__":
+
+    train = CROHME(
+        npy_path="datasets/crohme2019/link_npy",
+        img_path="datasets/crohme2019/Train_imgs",
+        pipeline=None, test_mode=False
+    )
+
+    #    train_dataloader = Runner.build_dataloader(dict(
+    #        batch_size=8,
+    #        num_workers=8,
+    #        persistent_workers=True,
+    #        sampler=dict(type='DefaultSampler', shuffle=True),
+    #        dataset=train,
+    #    ))
+
     print(len(train))

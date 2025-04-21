@@ -34,3 +34,4 @@ if __name__ == "__main__":
     #    ))
 
     print(len(train))
+    print(train[0])

@@ -2,7 +2,7 @@
 name = "hmeg"
 version = "0.1.0"
 dependencies = [
-  "mmcv-full<2",
+  "mmengine",
   "more-itertools",
   "numpy",
   "positional-encodings[pytorch]",

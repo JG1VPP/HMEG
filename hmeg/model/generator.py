@@ -1,17 +1,16 @@
 import torch
 import torch.nn as nn
+from mmengine import MODELS
 
 from hmeg.data.process import CROHME2Graph
 from hmeg.model.crn import RefinementNetwork
 from hmeg.model.graph import GraphTripleConv, GraphTripleConvNet
 from hmeg.model.layers import build_mlp
-from hmeg.model.layout import (
-    _boxes_to_region,
-)
+from hmeg.model.layout import _boxes_to_region
 
 
+@MODELS.register_module()
 class Sg2ImModel(nn.Module):
-
     def __init__(
         self,
         vocab,
@@ -342,4 +341,3 @@ def layout_matrix_to_layout(layout_matrix, obj_vecs, obj_to_img):
         layouts.append(layout)
     layouts = torch.cat(layouts, dim=0)
     return layouts
-

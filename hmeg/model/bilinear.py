@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 
-
 """
 Functions for performing differentiable bilinear cropping of images, for use in
 the object discriminator

@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmengine import MODELS
 
 from hmeg.model.bilinear import crop_bbox_batch
 from hmeg.model.layers import GlobalAvgPool, build_cnn
 
 
+@MODELS.register_module()
 class PatchDiscriminator(nn.Module):
     def __init__(
         self,
@@ -36,6 +38,7 @@ class PatchDiscriminator(nn.Module):
         return self.cnn(x)
 
 
+@MODELS.register_module()
 class AcDiscriminator(nn.Module):
     def __init__(
         self,
@@ -73,6 +76,7 @@ class AcDiscriminator(nn.Module):
         return real_scores, ac_loss
 
 
+@MODELS.register_module()
 class AcCropDiscriminator(nn.Module):
     def __init__(
         self,

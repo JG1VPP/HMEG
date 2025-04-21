@@ -292,6 +292,9 @@ optim_wrapper = dict(optimizer=dict(type="Adam", lr=1e-4))
 
 work_dir = "results"
 
+# deprecate! use load_from instead
+ckpt = "weight/layout_conv_sum2_new_with_model.pt"
+
 #
 #
 ## Switch the generator to eval mode after this many iterations

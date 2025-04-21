@@ -1,38 +1,47 @@
-import math
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from model.graph import GraphTripleConv, GraphTripleConvNet
-from model.crn import RefinementNetwork
-from model.layout import boxes_to_layout, masks_to_layout, _boxes_to_grid, _boxes_to_region, _pool_samples
-from model.layers import build_mlp
-
-from data.process import CROHME2Graph
+from hmeg.data.process import CROHME2Graph
+from hmeg.model.crn import RefinementNetwork
+from hmeg.model.graph import GraphTripleConv, GraphTripleConvNet
+from hmeg.model.layers import build_mlp
+from hmeg.model.layout import (
+    _boxes_to_region,
+)
 
 
 class Sg2ImModel(nn.Module):
 
-    def __init__(self, vocab, image_size=(64, 64), embedding_dim=64,
-                 gconv_dim=128, gconv_hidden_dim=512,
-                 gconv_pooling='avg', gconv_num_layers=5,
-                 refinement_dims=(1024, 512, 256, 128, 64),
-                 normalization='batch', activation='leakyrelu-0.2',
-                 mask_size=None, mlp_normalization='none', layout_noise_dim=0,
-                 **kwargs):
+    def __init__(
+        self,
+        vocab,
+        image_size=(64, 64),
+        embedding_dim=64,
+        gconv_dim=128,
+        gconv_hidden_dim=512,
+        gconv_pooling="avg",
+        gconv_num_layers=5,
+        refinement_dims=(1024, 512, 256, 128, 64),
+        normalization="batch",
+        activation="leakyrelu-0.2",
+        mask_size=None,
+        mlp_normalization="none",
+        layout_noise_dim=0,
+        **kwargs
+    ):
         super(Sg2ImModel, self).__init__()
 
         # We used to have some additional arguments:
         # vec_noise_dim, gconv_mode, box_anchor, decouple_obj_predictions
         if len(kwargs) > 0:
-            print('WARNING: Model got unexpected kwargs ', kwargs)
+            print("WARNING: Model got unexpected kwargs ", kwargs)
 
         self.vocab = vocab
         self.image_size = image_size
         self.layout_noise_dim = layout_noise_dim
 
-        num_objs = len(vocab['object_idx_to_name'])
-        num_preds = len(vocab['pred_idx_to_name'])
+        num_objs = len(vocab["object_idx_to_name"])
+        num_preds = len(vocab["pred_idx_to_name"])
         self.obj_embeddings = nn.Embedding(num_objs + 1, embedding_dim)
         self.pred_embeddings = nn.Embedding(num_preds, embedding_dim)
 
@@ -40,22 +49,22 @@ class Sg2ImModel(nn.Module):
             self.gconv = nn.Linear(embedding_dim, gconv_dim)
         elif gconv_num_layers > 0:
             gconv_kwargs = {
-                'input_dim': embedding_dim,
-                'output_dim': gconv_dim,
-                'hidden_dim': gconv_hidden_dim,
-                'pooling': gconv_pooling,
-                'mlp_normalization': mlp_normalization,
+                "input_dim": embedding_dim,
+                "output_dim": gconv_dim,
+                "hidden_dim": gconv_hidden_dim,
+                "pooling": gconv_pooling,
+                "mlp_normalization": mlp_normalization,
             }
             self.gconv = GraphTripleConv(**gconv_kwargs)
 
         self.gconv_net = None
         if gconv_num_layers > 1:
             gconv_kwargs = {
-                'input_dim': gconv_dim,
-                'hidden_dim': gconv_hidden_dim,
-                'pooling': gconv_pooling,
-                'num_layers': gconv_num_layers - 1,
-                'mlp_normalization': mlp_normalization,
+                "input_dim": gconv_dim,
+                "hidden_dim": gconv_hidden_dim,
+                "pooling": gconv_pooling,
+                "num_layers": gconv_num_layers - 1,
+                "mlp_normalization": mlp_normalization,
             }
             self.gconv_net = GraphTripleConvNet(**gconv_kwargs)
 
@@ -73,9 +82,9 @@ class Sg2ImModel(nn.Module):
         self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
 
         refinement_kwargs = {
-            'dims': (gconv_dim + layout_noise_dim,) + refinement_dims,
-            'normalization': normalization,
-            'activation': activation,
+            "dims": (gconv_dim + layout_noise_dim,) + refinement_dims,
+            "normalization": normalization,
+            "activation": activation,
         }
         self.refinement_net = RefinementNetwork(**refinement_kwargs)
 
@@ -85,18 +94,17 @@ class Sg2ImModel(nn.Module):
         output_dim = 1
         layers, cur_size = [], 1
         while cur_size < mask_size:
-            layers.append(nn.Upsample(scale_factor=2, mode='nearest'))
+            layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
             layers.append(nn.BatchNorm2d(dim))
             layers.append(nn.Conv2d(dim, dim, kernel_size=3, padding=1))
             layers.append(nn.ReLU())
             cur_size *= 2
         if cur_size != mask_size:
-            raise ValueError('Mask size must be a power of 2')
+            raise ValueError("Mask size must be a power of 2")
         layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
         return nn.Sequential(*layers)
 
-    def forward(self, objs, triples, obj_to_img=None,
-                boxes_gt=None, masks_gt=None):
+    def forward(self, objs, triples, obj_to_img=None, boxes_gt=None, masks_gt=None):
         """
         Required Inputs:
         - objs: LongTensor of shape (O,) giving categories for all objects
@@ -162,11 +170,20 @@ class Sg2ImModel(nn.Module):
         if self.layout_noise_dim > 0:
             N, C, H, W = layout.size()
             noise_shape = (N, self.layout_noise_dim, H, W)
-            layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
-                                       device=layout.device)
+            layout_noise = torch.randn(
+                noise_shape, dtype=layout.dtype, device=layout.device
+            )
             layout = torch.cat([layout, layout_noise], dim=1)
         img_64, img_128, img_256 = self.refinement_net(layout)
-        return img_64, img_128, img_256, boxes_pred, masks_pred, rel_scores, layout_matrix_32
+        return (
+            img_64,
+            img_128,
+            img_256,
+            boxes_pred,
+            masks_pred,
+            rel_scores,
+            layout_matrix_32,
+        )
 
     def encode_scene_graphs(self, scene_graphs):
         """
@@ -197,27 +214,27 @@ class Sg2ImModel(nn.Module):
             # We just got a single scene graph, so promote it to a list
             scene_graphs = [scene_graphs]
 
-        objs, triples, obj_to_img = [], [], []
         obj_offset = 0
+        objs, triples, obj_to_img = [], [], []
         for i, sg in enumerate(scene_graphs):
             # Insert dummy __image__ object and __in_image__ relationships
-            sg['objects'].append('__image__')
-            image_idx = len(sg['objects']) - 1
+            sg["objects"].append("__image__")
+            image_idx = len(sg["objects"]) - 1
             for j in range(image_idx):
-                sg['relationships'].append([j, '__in_image__', image_idx])
+                sg["relationships"].append([j, "__in_image__", image_idx])
 
-            for obj in sg['objects']:
-                obj_idx = self.vocab['object_name_to_idx'].get(obj, None)
+            for obj in sg["objects"]:
+                obj_idx = self.vocab["object_name_to_idx"].get(obj, None)
                 if obj_idx is None:
                     raise ValueError('Object "%s" not in vocab' % obj)
                 objs.append(obj_idx)
                 obj_to_img.append(i)
-            for s, p, o in sg['relationships']:
-                pred_idx = self.vocab['pred_name_to_idx'].get(p, None)
+            for s, p, o in sg["relationships"]:
+                pred_idx = self.vocab["pred_name_to_idx"].get(p, None)
                 if pred_idx is None:
                     raise ValueError('Relationship "%s" not in vocab' % p)
                 triples.append([s + obj_offset, pred_idx, o + obj_offset])
-            obj_offset += len(sg['objects'])
+            obj_offset += len(sg["objects"])
         device = next(self.parameters()).device
         objs = torch.tensor(objs, dtype=torch.int64, device=device)
         triples = torch.tensor(triples, dtype=torch.int64, device=device)
@@ -225,7 +242,7 @@ class Sg2ImModel(nn.Module):
         return objs, triples, obj_to_img
 
     def forward_json(self, scene_graphs):
-        """ Convenience method that combines encode_scene_graphs and forward. """
+        """Convenience method that combines encode_scene_graphs and forward."""
         objs, triples, obj_to_img = self.encode_scene_graphs(scene_graphs)
         return self.forward(objs, triples, obj_to_img)
 
@@ -256,7 +273,6 @@ class Sg2ImModel(nn.Module):
 
         return self.forward(objs, triples, obj_to_img)
 
-
     def forward_lg1(self, lg_path, boxes=None):
         objs, triples, obj_to_img = [], [], []
         obj_offset = 0
@@ -273,8 +289,6 @@ class Sg2ImModel(nn.Module):
         return self.forward(objs, triples, obj_to_img, boxes_gt=boxes)
 
 
-
-
 class Grid2Mask(nn.Module):
 
     def __init__(self, in_dim=4, hid_dim=64, embedding_dim=128):
@@ -285,14 +299,20 @@ class Grid2Mask(nn.Module):
         layers.append(nn.Conv2d(in_dim, hid_dim, kernel_size=3, stride=1, padding=1))
         layers.append(nn.ReLU())
         layers.append(nn.BatchNorm2d(hid_dim))
-        layers.append(nn.Conv2d(hid_dim, output_dim, kernel_size=3, stride=1, padding=1))
+        layers.append(
+            nn.Conv2d(hid_dim, output_dim, kernel_size=3, stride=1, padding=1)
+        )
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
         self.conv = nn.Sequential(
-            nn.ConvTranspose2d(embedding_dim, embedding_dim, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(
+                embedding_dim, embedding_dim, kernel_size=4, stride=2, padding=1
+            ),
             nn.ReLU(),
             nn.BatchNorm2d(embedding_dim),
-            nn.ConvTranspose2d(embedding_dim, embedding_dim, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(
+                embedding_dim, embedding_dim, kernel_size=4, stride=2, padding=1
+            ),
         )
 
     def forward(self, grid, obj_vecs, obj_to_img):
@@ -301,8 +321,6 @@ class Grid2Mask(nn.Module):
         # layout_256 = nn.functional.interpolate(layout_64, [256, 256], mode='area')
         layout_256 = self.conv(layout_64)
         return layout_256, layout_matrix_64
-
-
 
 
 def layout_matrix_to_layout(layout_matrix, obj_vecs, obj_to_img):
@@ -324,37 +342,4 @@ def layout_matrix_to_layout(layout_matrix, obj_vecs, obj_to_img):
         layouts.append(layout)
     layouts = torch.cat(layouts, dim=0)
     return layouts
-
-
-# def layout_matrix_to_layout(layout_matrix, obj_vecs, obj_to_img):
-#     O, D = obj_vecs.size()
-#     M = layout_matrix.size(-1)
-#     N = obj_to_img.data.max().item() + 1
-#     layouts = []
-#     for i in range(N):
-#         idx = (obj_to_img.data == i).nonzero().view(-1)
-#         if idx.dim() == 0:
-#             continue
-#         matrix = layout_matrix[idx].float().expand(D, -1, 1, M, M)
-#         matrix = matrix.squeeze(2).permute(1, 0, 2, 3)
-#         vecs = obj_vecs[idx].expand(M, M, -1, D)
-#         vecs = vecs.permute(2, 3, 0, 1)
-#         layout = matrix * vecs
-#         layouts.append(torch.sum(layout, dim=0))
-#     layouts = torch.cat(layouts, dim=0)
-#     return layouts
-
-
-
-
-
-
-
-if __name__ == '__main__':
-
-    ln = LayoutNet(128)
-    a = torch.FloatTensor(12, 128)
-    print(ln(a).shape)
-
-
 

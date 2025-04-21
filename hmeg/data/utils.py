@@ -2,7 +2,6 @@ import PIL
 import torch
 import torchvision.transforms as T
 
-
 # IMAGENET_MEAN = [0.485, 0.456, 0.406]
 # IMAGENET_STD = [0.229, 0.224, 0.225]
 
@@ -42,7 +41,7 @@ def imagenet_deprocess_batch(imgs, rescale=True):
       in the range [0, 255]
     """
     if isinstance(imgs, torch.autograd.Variable):
-      imgs = imgs.data
+        imgs = imgs.data
     imgs = imgs.cpu().clone()
     deprocess_fn = imagenet_deprocess(rescale_image=rescale)
     imgs_de = []
@@ -128,29 +127,13 @@ def view_box(boxes, obj_to_img, img_size=(64, 64)):
     y1 = torch.round(y1 * img_size[0]).type(torch.long)
     layout = torch.zeros((N, 1, *img_size), dtype=torch.uint8)
     for i in range(O):
-        layout[obj_to_img[i], 0, y0[i]: y1[i], x0[i]: x1[i]] += 75
+        layout[obj_to_img[i], 0, y0[i] : y1[i], x0[i] : x1[i]] += 75
     return layout
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     a = list(range(10))
     r = RecursiveIter(a)
     while True:
-      print(next(r))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        print(next(r))

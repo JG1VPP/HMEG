@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from model.layers import get_normalization_2d
-from model.layers import get_activation
+from hmeg.model.layers import get_activation, get_normalization_2d
 
 """
 Cascaded refinement network architecture, as described in:
@@ -15,12 +14,19 @@ ICCV 2017
 
 
 class RefinementModule(nn.Module):
-    def __init__(self, layout_dim, input_dim, output_dim,
-                 normalization='instance', activation='leakyrelu'):
+    def __init__(
+        self,
+        layout_dim,
+        input_dim,
+        output_dim,
+        normalization="instance",
+        activation="leakyrelu",
+    ):
         super(RefinementModule, self).__init__()
         layers = []
-        layers.append(nn.Conv2d(layout_dim + input_dim, output_dim,
-                                kernel_size=3, padding=1))
+        layers.append(
+            nn.Conv2d(layout_dim + input_dim, output_dim, kernel_size=3, padding=1)
+        )
         layers.append(get_normalization_2d(output_dim, normalization))
         layers.append(get_activation(activation))
         layers.append(nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=1))
@@ -47,7 +53,7 @@ class RefinementModule(nn.Module):
 
 
 class RefinementNetwork(nn.Module):
-    def __init__(self, dims, normalization='instance', activation='leakyrelu'):
+    def __init__(self, dims, normalization="instance", activation="leakyrelu"):
         super(RefinementNetwork, self).__init__()
         layout_dim = dims[0]
         self.refinement_modules = nn.ModuleList()
@@ -56,8 +62,13 @@ class RefinementNetwork(nn.Module):
             if i >= len(dims) - 2:
                 input_dim += 3
             output_dim = dims[i]
-            mod = RefinementModule(layout_dim, input_dim, output_dim,
-                                   normalization=normalization, activation=activation)
+            mod = RefinementModule(
+                layout_dim,
+                input_dim,
+                output_dim,
+                normalization=normalization,
+                activation=activation,
+            )
             self.refinement_modules.append(mod)
 
         self.output_conv_64 = self._make_output_conv(dims[-3], activation)
@@ -68,7 +79,7 @@ class RefinementNetwork(nn.Module):
         output_conv_layers = [
             nn.Conv2d(dim, dim, kernel_size=3, padding=1),
             get_activation(activation),
-            nn.Conv2d(dim, 3, kernel_size=1, padding=0)
+            nn.Conv2d(dim, 3, kernel_size=1, padding=0),
         ]
         nn.init.kaiming_normal_(output_conv_layers[0].weight)
         nn.init.kaiming_normal_(output_conv_layers[2].weight)
@@ -93,21 +104,16 @@ class RefinementNetwork(nn.Module):
 
         feats = torch.zeros(N, 1, input_H, input_W).to(layout)
         for mod in self.refinement_modules[:-2]:
-            feats = F.upsample(feats, scale_factor=2, mode='nearest')
+            feats = F.upsample(feats, scale_factor=2, mode="nearest")
             feats = mod(layout, feats)
 
         out_64 = self.output_conv_64(feats)
         feats = torch.cat([feats, out_64], dim=1)
-        feats = F.upsample(feats, scale_factor=2, mode='nearest')
+        feats = F.upsample(feats, scale_factor=2, mode="nearest")
         feats = self.refinement_modules[-2](layout, feats)
         out_128 = self.output_conv_128(feats)
         feats = torch.cat([feats, out_128], dim=1)
-        feats = F.upsample(feats, scale_factor=2, mode='nearest')
+        feats = F.upsample(feats, scale_factor=2, mode="nearest")
         feats = self.refinement_modules[-1](layout, feats)
         out_256 = self.output_conv_256(feats)
         return out_64, out_128, out_256
-
-
-
-
-

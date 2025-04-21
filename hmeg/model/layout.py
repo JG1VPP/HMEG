@@ -8,7 +8,7 @@ are then fed as input to the cascaded refinement network.
 """
 
 
-def boxes_to_layout(vecs, boxes, obj_to_img, H, W=None, pooling='sum'):
+def boxes_to_layout(vecs, boxes, obj_to_img, H, W=None, pooling="sum"):
     """
     Inputs:
     - vecs: Tensor of shape (O, D) giving vectors
@@ -54,7 +54,7 @@ def boxes_to_layout_matrix(boxes, H, W=None):
     return sampled
 
 
-def masks_to_layout(vecs, boxes, masks, obj_to_img, H, W=None, pooling='sum'):
+def masks_to_layout(vecs, boxes, masks, obj_to_img, H, W=None, pooling="sum"):
     """
     Inputs:
     - vecs: Tensor of shape (O, D) giving vectors
@@ -130,7 +130,7 @@ def _boxes_to_region(boxes, H, W):
     return region
 
 
-def _pool_samples(samples, obj_to_img, pooling='sum'):
+def _pool_samples(samples, obj_to_img, pooling="sum"):
     """
     Input:
     - samples: FloatTensor of shape (O, D, H, W)
@@ -149,7 +149,7 @@ def _pool_samples(samples, obj_to_img, pooling='sum'):
     idx = obj_to_img.view(O, 1, 1, 1).expand(O, D, H, W)
     out = out.scatter_add(0, idx, samples)
 
-    if pooling == 'avg':
+    if pooling == "avg":
         # Divide each output mask by the number of objects; use scatter_add again
         # to count the number of objects per image.
         ones = torch.ones(O, dtype=dtype, device=device)
@@ -158,80 +158,90 @@ def _pool_samples(samples, obj_to_img, pooling='sum'):
         print(obj_counts)
         obj_counts = obj_counts.clamp(min=1)
         out = out / obj_counts.view(N, 1, 1, 1)
-    elif pooling != 'sum':
+    elif pooling != "sum":
         raise ValueError('Invalid pooling "%s"' % pooling)
 
     return out
 
 
-if __name__ == '__main__':
-    vecs = torch.FloatTensor([
-        [1, 0, 0], [0, 1, 0], [0, 0, 1],
-        [1, 0, 0], [0, 1, 0], [0, 0, 1],
-    ])
-    boxes = torch.FloatTensor([
-        [0.25, 0.125, 0.5, 0.875],
-        [0, 0, 1, 0.25],
-        [0.6125, 0, 0.875, 1],
-        [0, 0.8, 1, 1.0],
-        [0.25, 0.125, 0.5, 0.875],
-        [0.6125, 0, 0.875, 1],
-    ])
+if __name__ == "__main__":
+    vecs = torch.FloatTensor(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ]
+    )
+    boxes = torch.FloatTensor(
+        [
+            [0.25, 0.125, 0.5, 0.875],
+            [0, 0, 1, 0.25],
+            [0.6125, 0, 0.875, 1],
+            [0, 0.8, 1, 1.0],
+            [0.25, 0.125, 0.5, 0.875],
+            [0.6125, 0, 0.875, 1],
+        ]
+    )
     obj_to_img = torch.LongTensor([0, 0, 0, 1, 1, 1])
     # vecs = torch.FloatTensor([[[1]]])
     # boxes = torch.FloatTensor([[[0.25, 0.25, 0.75, 0.75]]])
     vecs, boxes = vecs.cuda(), boxes.cuda()
     obj_to_img = obj_to_img.cuda()
-    out = boxes_to_layout(vecs, boxes, obj_to_img, 256, pooling='sum')
+    out = boxes_to_layout(vecs, boxes, obj_to_img, 256, pooling="sum")
 
     from torchvision.utils import save_image
 
-    save_image(out.data, 'out.png')
+    save_image(out.data, "out.png")
 
-    masks = torch.FloatTensor([
+    masks = torch.FloatTensor(
         [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 1, 0],
-            [1, 0, 0, 0, 1],
-            [0, 1, 0, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 0, 1, 0],
+                [1, 0, 0, 0, 1],
+                [0, 1, 0, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            [
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0],
+            ],
         ]
-    ])
+    )
     masks = masks.cuda()
     out = masks_to_layout(vecs, boxes, masks, obj_to_img, 256)
-    save_image(out.data, 'out_masks.png')
+    save_image(out.data, "out_masks.png")

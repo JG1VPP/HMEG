@@ -2,11 +2,11 @@ import torch.nn as nn
 
 
 def get_normalization_2d(channels, normalization):
-    if normalization == 'instance':
+    if normalization == "instance":
         return nn.InstanceNorm2d(channels)
-    elif normalization == 'batch':
+    elif normalization == "batch":
         return nn.BatchNorm2d(channels)
-    elif normalization == 'none':
+    elif normalization == "none":
         return None
     else:
         raise ValueError('Unrecognized normalization type "%s"' % normalization)
@@ -14,14 +14,14 @@ def get_normalization_2d(channels, normalization):
 
 def get_activation(name):
     kwargs = {}
-    if name.lower().startswith('leakyrelu'):
-        if '-' in name:
-            slope = float(name.split('-')[1])
-            kwargs = {'negative_slope': slope}
-    name = 'leakyrelu'
+    if name.lower().startswith("leakyrelu"):
+        if "-" in name:
+            slope = float(name.split("-")[1])
+            kwargs = {"negative_slope": slope}
+    name = "leakyrelu"
     activations = {
-        'relu': nn.ReLU,
-        'leakyrelu': nn.LeakyReLU,
+        "relu": nn.ReLU,
+        "leakyrelu": nn.LeakyReLU,
     }
     if name.lower() not in activations:
         raise ValueError('Invalid activation "%s"' % name)
@@ -31,11 +31,11 @@ def get_activation(name):
 def _init_conv(layer, method):
     if not isinstance(layer, nn.Conv2d):
         return
-    if method == 'default':
+    if method == "default":
         return
-    elif method == 'kaiming-normal':
+    elif method == "kaiming-normal":
         nn.init.kaiming_normal(layer.weight)
-    elif method == 'kaiming-uniform':
+    elif method == "kaiming-uniform":
         nn.init.kaiming_uniform(layer.weight)
 
 
@@ -44,7 +44,7 @@ class Flatten(nn.Module):
         return x.view(x.size(0), -1)
 
     def __repr__(self):
-        return 'Flatten()'
+        return "Flatten()"
 
 
 class Unflatten(nn.Module):
@@ -56,8 +56,8 @@ class Unflatten(nn.Module):
         return x.view(*self.size)
 
     def __repr__(self):
-        size_str = ', '.join('%d' % d for d in self.size)
-        return 'Unflatten(%s)' % size_str
+        size_str = ", ".join("%d" % d for d in self.size)
+        return "Unflatten(%s)" % size_str
 
 
 class GlobalAvgPool(nn.Module):
@@ -67,8 +67,15 @@ class GlobalAvgPool(nn.Module):
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, channels, normalization='batch', activation='relu',
-                 padding='same', kernel_size=3, init='default'):
+    def __init__(
+        self,
+        channels,
+        normalization="batch",
+        activation="relu",
+        padding="same",
+        kernel_size=3,
+        init="default",
+    ):
         super(ResidualBlock, self).__init__()
 
         K = kernel_size
@@ -98,16 +105,22 @@ class ResidualBlock(nn.Module):
 
 
 def _get_padding(K, mode):
-    """ Helper method to compute padding size """
-    if mode == 'valid':
+    """Helper method to compute padding size"""
+    if mode == "valid":
         return 0
-    elif mode == 'same':
+    elif mode == "same":
         assert K % 2 == 1, 'Invalid kernel size %d for "same" padding' % K
         return (K - 1) // 2
 
 
-def build_cnn(arch, normalization='batch', activation='relu', padding='same',
-              pooling='max', init='default'):
+def build_cnn(
+    arch,
+    normalization="batch",
+    activation="relu",
+    padding="same",
+    pooling="max",
+    init="default",
+):
     """
     Build a CNN from an architecture string, which is a list of layer
     specification strings. The overall architecture can be given as a list or as
@@ -132,9 +145,9 @@ def build_cnn(arch, normalization='batch', activation='relu', padding='same',
     - channels: Number of output channels
     """
     if isinstance(arch, str):
-        arch = arch.split(',')
+        arch = arch.split(",")
     cur_C = 3
-    if len(arch) > 0 and arch[0][0] == 'I':
+    if len(arch) > 0 and arch[0][0] == "I":
         cur_C = int(arch[0][1:])
         arch = arch[1:]
 
@@ -142,12 +155,12 @@ def build_cnn(arch, normalization='batch', activation='relu', padding='same',
     flat = False
     layers = []
     for i, s in enumerate(arch):
-        if s[0] == 'C':
+        if s[0] == "C":
             if not first_conv:
                 layers.append(get_normalization_2d(cur_C, normalization))
                 layers.append(get_activation(activation))
             first_conv = False
-            vals = [int(i) for i in s[1:].split('-')]
+            vals = [int(i) for i in s[1:].split("-")]
             if len(vals) == 2:
                 K, next_C = vals
                 stride = 1
@@ -159,24 +172,29 @@ def build_cnn(arch, normalization='batch', activation='relu', padding='same',
             layers.append(conv)
             _init_conv(layers[-1], init)
             cur_C = next_C
-        elif s[0] == 'R':
-            norm = 'none' if first_conv else normalization
-            res = ResidualBlock(cur_C, normalization=norm, activation=activation,
-                                padding=padding, init=init)
+        elif s[0] == "R":
+            norm = "none" if first_conv else normalization
+            res = ResidualBlock(
+                cur_C,
+                normalization=norm,
+                activation=activation,
+                padding=padding,
+                init=init,
+            )
             layers.append(res)
             first_conv = False
-        elif s[0] == 'U':
+        elif s[0] == "U":
             factor = int(s[1:])
-            layers.append(nn.Upsample(scale_factor=factor, mode='nearest'))
-        elif s[0] == 'P':
+            layers.append(nn.Upsample(scale_factor=factor, mode="nearest"))
+        elif s[0] == "P":
             factor = int(s[1:])
-            if pooling == 'max':
+            if pooling == "max":
                 pool = nn.MaxPool2d(kernel_size=factor, stride=factor)
-            elif pooling == 'avg':
+            elif pooling == "avg":
                 pool = nn.AvgPool2d(kernel_size=factor, stride=factor)
             layers.append(pool)
-        elif s[:2] == 'FC':
-            _, Din, Dout = s.split('-')
+        elif s[:2] == "FC":
+            _, Din, Dout = s.split("-")
             Din, Dout = int(Din), int(Dout)
             if not flat:
                 layers.append(Flatten())
@@ -193,19 +211,20 @@ def build_cnn(arch, normalization='batch', activation='relu', padding='same',
     return nn.Sequential(*layers), cur_C
 
 
-def build_mlp(dim_list, activation='relu', batch_norm='none',
-              dropout=0, final_nonlinearity=True):
+def build_mlp(
+    dim_list, activation="relu", batch_norm="none", dropout=0, final_nonlinearity=True
+):
     layers = []
     for i in range(len(dim_list) - 1):
         dim_in, dim_out = dim_list[i], dim_list[i + 1]
         layers.append(nn.Linear(dim_in, dim_out))
-        final_layer = (i == len(dim_list) - 2)
+        final_layer = i == len(dim_list) - 2
         if not final_layer or final_nonlinearity:
-            if batch_norm == 'batch':
+            if batch_norm == "batch":
                 layers.append(nn.BatchNorm1d(dim_out))
-            if activation == 'relu':
+            if activation == "relu":
                 layers.append(nn.ReLU())
-            elif activation == 'leakyrelu':
+            elif activation == "leakyrelu":
                 layers.append(nn.LeakyReLU())
         if dropout > 0:
             layers.append(nn.Dropout(p=dropout))

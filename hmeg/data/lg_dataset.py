@@ -1,13 +1,10 @@
 import os
-import numpy as np
-from PIL import Image
-from tqdm import tqdm
 
+import numpy as np
 import torch
 from torch.utils.data import Dataset
-import torchvision.transforms as T
 
-from data.process import CROHME2Graph
+from hmeg.data.process import CROHME2Graph
 
 
 class LGDataset(Dataset):
@@ -17,10 +14,12 @@ class LGDataset(Dataset):
         self.data_dir = data_dir
         self.converter = CROHME2Graph(vocab)
 
-        self.npy_paths = [os.path.join(self.data_dir, name)
-                         for name in os.listdir(self.data_dir) if name.endswith('.npy')]
+        self.npy_paths = [
+            os.path.join(self.data_dir, name)
+            for name in os.listdir(self.data_dir)
+            if name.endswith(".npy")
+        ]
         self.npy = [np.load(npy_path, allow_pickle=True) for npy_path in self.npy_paths]
-
 
     def __len__(self):
         return len(self.npy)
@@ -71,27 +70,24 @@ def lg_collate_fn(batch):
     return out
 
 
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import json
+
     from torch.utils.data import DataLoader
 
-    CROHME_DIR = os.path.expanduser('../../datasets/crohme2019')
+    CROHME_DIR = os.path.expanduser("../../datasets/crohme2019")
 
-    with open(os.path.join(CROHME_DIR, 'vocab.json')) as f:
+    with open(os.path.join(CROHME_DIR, "vocab.json")) as f:
         vocab = json.load(f)
 
-    lgds = LGDataset(vocab, '../100k_symlg')
+    lgds = LGDataset(vocab, "../100k_symlg")
     loader_kwargs = {
-        'batch_size': 8,
-        'num_workers': 4,
-        'shuffle': True,
-        'collate_fn': lg_collate_fn,
+        "batch_size": 8,
+        "num_workers": 4,
+        "shuffle": True,
+        "collate_fn": lg_collate_fn,
     }
     train_loader = DataLoader(lgds, **loader_kwargs)
-
 
     data_iter = iter(train_loader)
     objs, triples, obj_to_img, triple_to_img = next(data_iter)
@@ -99,9 +95,3 @@ if __name__ == '__main__':
     print(triples.shape)
     print(obj_to_img)
     print(triple_to_img.shape)
-
-
-
-
-
-

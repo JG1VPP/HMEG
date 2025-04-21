@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from model.utils import timeit
+
 
 """
 Functions for performing differentiable bilinear cropping of images, for use in
@@ -8,7 +8,7 @@ the object discriminator
 """
 
 
-def crop_bbox_batch(feats, bbox, bbox_to_feats, HH, WW=None, backend='cudnn'):
+def crop_bbox_batch(feats, bbox, bbox_to_feats, HH, WW=None, backend="cudnn"):
     """
     Inputs:
     - feats: FloatTensor of shape (N, C, H, W)
@@ -22,13 +22,13 @@ def crop_bbox_batch(feats, bbox, bbox_to_feats, HH, WW=None, backend='cudnn'):
     - crops: FloatTensor of shape (B, C, HH, WW) where crops[i] uses bbox[i] to
       crop from feats[bbox_to_feats[i]].
     """
-    if backend == 'cudnn':
+    if backend == "cudnn":
         return crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW)
     N, C, H, W = feats.size()
     B = bbox.size(0)
-    if WW is None: WW = HH
-    dtype, device = feats.dtype, feats.device
-    crops = torch.zeros(B, C, HH, WW, dtype=dtype, device=device)
+    if WW is None:
+        WW = HH
+    crops = torch.zeros(B, C, HH, WW, dtype=feats.dtype, device=feats.device)
     for i in range(N):
         idx = (bbox_to_feats.data == i).nonzero()
         if idx.dim() == 0:
@@ -52,8 +52,8 @@ def _invperm(p):
 def crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW=None):
     N, C, H, W = feats.size()
     B = bbox.size(0)
-    if WW is None: WW = HH
-    dtype = feats.data.type()
+    if WW is None:
+        WW = HH
 
     feats_flat, bbox_flat, all_idx = [], [], []
     for i in range(N):
@@ -71,7 +71,7 @@ def crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW=None):
 
     feats_flat = torch.cat(feats_flat, dim=0)
     bbox_flat = torch.cat(bbox_flat, dim=0)
-    crops = crop_bbox(feats_flat, bbox_flat, HH, WW, backend='cudnn')
+    crops = crop_bbox(feats_flat, bbox_flat, HH, WW, backend="cudnn")
 
     # If the crops were sequential (all_idx is identity permutation) then we can
     # simply return them; otherwise we need to permute crops by the inverse
@@ -83,7 +83,7 @@ def crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW=None):
     return crops[_invperm(all_idx)]
 
 
-def crop_bbox(feats, bbox, HH, WW=None, backend='cudnn'):
+def crop_bbox(feats, bbox, HH, WW=None, backend="cudnn"):
     """
     Take differentiable crops of feats specified by bbox.
 
@@ -100,17 +100,18 @@ def crop_bbox(feats, bbox, HH, WW=None, backend='cudnn'):
     N = feats.size(0)
     assert bbox.size(0) == N
     assert bbox.size(1) == 4
-    if WW is None: WW = HH
-    if backend == 'cudnn':
+    if WW is None:
+        WW = HH
+    if backend == "cudnn":
         # Change box from [0, 1] to [-1, 1] coordinate system
         bbox = 2 * bbox - 1
     x0, y0 = bbox[:, 0], bbox[:, 1]
     x1, y1 = bbox[:, 2], bbox[:, 3]
     X = tensor_linspace(x0, x1, steps=WW).view(N, 1, WW).expand(N, HH, WW)
     Y = tensor_linspace(y0, y1, steps=HH).view(N, HH, 1).expand(N, HH, WW)
-    if backend == 'jj':
+    if backend == "jj":
         return bilinear_sample(feats, X, Y)
-    elif backend == 'cudnn':
+    elif backend == "cudnn":
         grid = torch.stack([X, Y], dim=3)
         return F.grid_sample(feats, grid)
 
@@ -135,7 +136,8 @@ def uncrop_bbox(feats, bbox, H, W=None, fill_value=0):
     N, C = feats.size(0), feats.size(1)
     assert bbox.size(0) == N
     assert bbox.size(1) == 4
-    if W is None: H = W
+    if W is None:
+        H = W
 
     x0, y0 = bbox[:, 0], bbox[:, 1]
     x1, y1 = bbox[:, 2], bbox[:, 3]
@@ -260,22 +262,27 @@ def tensor_linspace(start, end, steps=10):
     return out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy as np
-    from scipy.misc import imread, imsave, imresize
+    from scipy.misc import imread, imresize, imsave
 
-    cat = imresize(imread('cat.jpg'), (256, 256))
-    dog = imresize(imread('dog.jpg'), (256, 256))
-    feats = torch.stack([
-        torch.from_numpy(cat.transpose(2, 0, 1).astype(np.float32)),
-        torch.from_numpy(dog.transpose(2, 0, 1).astype(np.float32))],
-        dim=0)
+    cat = imresize(imread("cat.jpg"), (256, 256))
+    dog = imresize(imread("dog.jpg"), (256, 256))
+    feats = torch.stack(
+        [
+            torch.from_numpy(cat.transpose(2, 0, 1).astype(np.float32)),
+            torch.from_numpy(dog.transpose(2, 0, 1).astype(np.float32)),
+        ],
+        dim=0,
+    )
 
-    boxes = torch.FloatTensor([
-        [0, 0, 1, 1],
-        [0.25, 0.25, 0.75, 0.75],
-        [0, 0, 0.5, 0.5],
-    ])
+    boxes = torch.FloatTensor(
+        [
+            [0, 0, 1, 1],
+            [0.25, 0.25, 0.75, 0.75],
+            [0, 0, 0.5, 0.5],
+        ]
+    )
 
     box_to_feats = torch.LongTensor([1, 0, 1]).cuda()
 
@@ -283,4 +290,4 @@ if __name__ == '__main__':
     crops = crop_bbox_batch_cudnn(feats, boxes, box_to_feats, 128)
     for i in range(crops.size(0)):
         crop_np = crops.data[i].cpu().numpy().transpose(1, 2, 0).astype(np.uint8)
-        imsave('out%d.png' % i, crop_np)
+        imsave("out%d.png" % i, crop_np)

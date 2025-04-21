@@ -1,10 +1,10 @@
 import os
-import numpy as np
-from PIL import Image
 
+import numpy as np
 import torch
-from torch.utils.data import Dataset
 import torchvision.transforms as T
+from PIL import Image
+from torch.utils.data import Dataset
 
 
 class CROHMELabelGraphDataset(Dataset):
@@ -14,17 +14,33 @@ class CROHMELabelGraphDataset(Dataset):
         self.img_size = image_size
         self.nc = nc + 1
         self.root = root
-        self.npy_dir = os.path.join(root, 'link_npy')
-        self.image_dir = os.path.join(root, 'Train_imgs')
+        self.npy_dir = os.path.join(root, "link_npy")
+        self.image_dir = os.path.join(root, "Train_imgs")
 
         self.names = names
-        self.npy_paths = [os.path.join(self.npy_dir, name + '.npy') for name in self.names]
-        self.image_paths = [os.path.join(self.image_dir, name + '.png') for name in self.names]
+        self.npy_paths = [
+            os.path.join(self.npy_dir, name + ".npy") for name in self.names
+        ]
+        self.image_paths = [
+            os.path.join(self.image_dir, name + ".png") for name in self.names
+        ]
 
-        self.npy = [np.load(npy_path, allow_pickle=True).item() for npy_path in self.npy_paths]
+        self.npy = [
+            np.load(npy_path, allow_pickle=True).item() for npy_path in self.npy_paths
+        ]
 
-        self.transform_64 = T.Compose([T.Resize((round(image_size[0] / 4), round(image_size[1] / 4))), T.ToTensor()])
-        self.transform_128 = T.Compose([T.Resize((round(image_size[0] / 2), round(image_size[1] / 2))), T.ToTensor()])
+        self.transform_64 = T.Compose(
+            [
+                T.Resize((round(image_size[0] / 4), round(image_size[1] / 4))),
+                T.ToTensor(),
+            ]
+        )
+        self.transform_128 = T.Compose(
+            [
+                T.Resize((round(image_size[0] / 2), round(image_size[1] / 2))),
+                T.ToTensor(),
+            ]
+        )
         self.transform_256 = T.Compose([T.Resize(image_size), T.ToTensor()])
 
     def __len__(self):
@@ -33,13 +49,13 @@ class CROHMELabelGraphDataset(Dataset):
     def __getitem__(self, index):
         img_path = self.image_paths[index]
 
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert("RGB")
         image_64 = self.transform_64(image)
         image_128 = self.transform_128(image)
         image_256 = self.transform_256(image)
         # image = torch.cat([image] * 3, dim=0)
-        bbox = self.npy[index]['bbox']
-        edge_type = self.npy[index]['edge_type']
+        bbox = self.npy[index]["bbox"]
+        edge_type = self.npy[index]["edge_type"]
 
         objs = bbox[:, 0].long()
         boxes = bbox[:, 1:]
@@ -64,10 +80,11 @@ def box2layout(objs, boxes, nc, img_size=(256, 256)):
     y1 = torch.round(y1 * img_size[0]).type(torch.long)
     layout = torch.zeros(nc, *img_size, dtype=torch.float32)
     for i in range(N):
-        layout[objs[i], y0[i]: y1[i], x0[i]: x1[i]] += 1
+        layout[objs[i], y0[i] : y1[i], x0[i] : x1[i]] += 1
     return layout.unsqueeze(0)
 
-# from model.layout import boxes_to_layout_matrix
+
+# from hmeg.model.layout import boxes_to_layout_matrix
 #
 # def box2layout(boxes, img_size=(256, 256)):
 #     H, W = img_size
@@ -90,7 +107,15 @@ def crohme_collate_fn(batch):
       triple_to_img[t] = n means that triples[t] belongs to imgs[n].
     """
     # batch is a list, and each element is (image, objs, boxes, triples)
-    all_imgs_64, all_imgs_128, all_imgs_256, all_objs, all_boxes, all_layout, all_triples = [], [], [], [], [], [], []
+    (
+        all_imgs_64,
+        all_imgs_128,
+        all_imgs_256,
+        all_objs,
+        all_boxes,
+        all_layout,
+        all_triples,
+    ) = ([], [], [], [], [], [], [])
     all_obj_to_img, all_triple_to_img = [], []
     obj_offset = 0
     for i, (img_64, img_128, img_256, objs, boxes, layout, triples) in enumerate(batch):
@@ -120,24 +145,33 @@ def crohme_collate_fn(batch):
     all_obj_to_img = torch.cat(all_obj_to_img)
     all_triple_to_img = torch.cat(all_triple_to_img)
 
-    out = (all_imgs_64, all_imgs_128, all_imgs_256, all_objs, all_boxes, all_layout, all_triples,
-           all_obj_to_img, all_triple_to_img)
+    out = (
+        all_imgs_64,
+        all_imgs_128,
+        all_imgs_256,
+        all_objs,
+        all_boxes,
+        all_layout,
+        all_triples,
+        all_obj_to_img,
+        all_triple_to_img,
+    )
     return out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from torch.utils.data import DataLoader
 
-    root_dir = '../../datasets/crohme2019'
-    npy_dir = os.path.join(root_dir, 'link_npy')
+    root_dir = "../../datasets/crohme2019"
+    npy_dir = os.path.join(root_dir, "link_npy")
     names = [name[:-4] for name in os.listdir(npy_dir)]
     ds = CROHMELabelGraphDataset(root_dir, names, nc=101)
 
     loader_kwargs = {
-        'batch_size': 8,
-        'num_workers': 4,
-        'shuffle': True,
-        'collate_fn': crohme_collate_fn,
+        "batch_size": 8,
+        "num_workers": 4,
+        "shuffle": True,
+        "collate_fn": crohme_collate_fn,
     }
     train_loader = DataLoader(ds, **loader_kwargs)
     ds_iter = iter(train_loader)
@@ -154,5 +188,3 @@ if __name__ == '__main__':
     print(layout.shape)
     print(triples.shape)
     print(objs_to_imgs.shape)
-
-

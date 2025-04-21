@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from tensorboardX import SummaryWriter
+#from tensorboardX import SummaryWriter
 
 import os
 import json
@@ -22,6 +22,7 @@ import argparse
 import math
 import numpy as np
 import itertools
+from tqdm import tqdm
 from collections import defaultdict
 
 
@@ -30,7 +31,7 @@ parser.add_argument('--dataset', default='crohme', choices=['vg', 'coco', 'crohm
 
 # Optimization hyperparameters
 parser.add_argument('--batch_size', default=8, type=int)
-parser.add_argument('--num_iterations', default=10000000, type=int)
+parser.add_argument('--num_epochs', default=1000, type=int)
 parser.add_argument('--learning_rate', default=1e-4, type=float)
 
 # Switch the generator to eval mode after this many iterations
@@ -84,16 +85,14 @@ parser.add_argument('--d_img_arch',
 parser.add_argument('--d_img_weight', default=1.0, type=float)  # multiplied by d_loss_weight
 
 # Output options
-parser.add_argument('--print_every', default=10, type=int)
 parser.add_argument('--timing', default=False, type=bool_flag)
-parser.add_argument('--checkpoint_every', default=10000, type=int)
 parser.add_argument('--output_dir', default=os.getcwd())
 parser.add_argument('--checkpoint_name', default='layout_conv_sum2_new')
 parser.add_argument('--checkpoint_start_from', default=None)
 parser.add_argument('--restore_from_checkpoint', default=False, type=bool_flag)
 
 
-CROHME_DIR = os.path.expanduser('../datasets/crohme2019')
+CROHME_DIR = os.path.expanduser('datasets/crohme2019')
 
 
 class Trainer(object):
@@ -101,7 +100,7 @@ class Trainer(object):
     def __init__(self, args, device):
         self.args = args
         self.device = device
-        self.writer = SummaryWriter()
+        self.writer = None #SummaryWriter()
 
         self.vocab, self.train_loader, self.val_loader = self._build_loaders()
         self.generator, self.g_kwargs = self._build_generator(self.vocab)
@@ -157,8 +156,8 @@ class Trainer(object):
 
     def train(self):
         step = 0
-        for epoch in range(self.args.num_iterations):
-            for t, batch in enumerate(self.train_loader):
+        for epoch in range(self.args.num_epochs):
+            for t, batch in enumerate(tqdm(self.train_loader, desc=f"epoch {epoch}")):
                 step += 1
                 if step == self.args.eval_mode_after:
                     print('switching to eval mode')
@@ -239,26 +238,23 @@ class Trainer(object):
                     d_img_losses.total_loss.backward()
                     self.optimizer_d_img.step()
 
-                if step % self.args.print_every == 0:
-                    self._record(step, losses, d_obj_losses, d_img_losses)
+            self._record(epoch, losses, d_obj_losses, d_img_losses)
+            self._check(epoch, t)
 
-                if step % self.args.checkpoint_every == 0:
-                    self._check(epoch, t)
-
-    def _record(self, step, losses, d_obj_losses, d_img_losses):
-        print('t = %d / %d' % (step, self.args.num_iterations))
+    def _record(self, epoch, losses, d_obj_losses, d_img_losses):
+        print('t = %d / %d' % (epoch, self.args.num_epochs))
         for tag, val in losses.items():
-            self.writer.add_scalar(tag, val, step)
+            #self.writer.add_scalar(tag, val, step)
             self.checkpoint['losses'][tag].append(val)
             print(' G [%s]: %.4f' % (tag, val))
         if d_obj_losses is not None:
             for tag, val in d_obj_losses.items():
-                self.writer.add_scalar(tag, val, step)
+                #self.writer.add_scalar(tag, val, step)
                 self.checkpoint['d_losses'][tag].append(val)
                 print(' D_obj [%s]: %.4f' % (tag, val))
         if d_img_losses is not None:
             for tag, val in d_img_losses.items():
-                self.writer.add_scalar(tag, val, step)
+                #self.writer.add_scalar(tag, val, step)
                 self.checkpoint['d_losses'][tag].append(val)
                 print(' D_img [%s]: %.4f' % (tag, val))
 

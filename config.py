@@ -8,7 +8,9 @@ train = dict(
         pipeline=[
             dict(type="LoadImageFromFile", to_float32=True),
             dict(
-                type="Normalize", mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]
+                type="Normalize",
+                mean=[127.5, 127.5, 127.5],
+                std=[127.5, 127.5, 127.5],
             ),
             dict(type="Resize", scale=(256, 256), keep_ratio=True),
             dict(type="Pad", size=(256, 256), pad_val=1),

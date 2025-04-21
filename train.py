@@ -1,8 +1,8 @@
+from mmcv import TRANSFORMS  # noqa
 from mmengine import Config
 from mmengine.runner import Runner
 
-from mmcv import TRANSFORMS # noqa
-from hmeg.data import CROHME # noqa
+from hmeg.data import CROHME  # noqa
 
 if __name__ == "__main__":
     config = Config.fromfile("config.py")

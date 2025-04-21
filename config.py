@@ -2,7 +2,12 @@ train = dict(
     type="CROHME",
     npy_path="datasets/crohme2019/link_npy",
     img_path="datasets/crohme2019/Train_imgs",
-    pipeline=None,
+    pipeline=[
+        dict(type="LoadImageFromFile", to_float32=True),
+        dict(type="Resize", scale=(256, 256)),
+        dict(type="Pad", size=(256, 256), pad_val=1),
+        dict(type="ToTensor"),
+    ],
     test_mode=False,
 )
 

@@ -1,4 +1,4 @@
-from mmengine import DATASETS, build_from_cfg
+from mmcv import DATASETS, build_from_cfg
 
 
 def build_dataset(config):

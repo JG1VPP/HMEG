@@ -44,7 +44,7 @@ class ResultViewer(object):
         return patch
 
 
-CROHME_DIR = os.path.expanduser('../datasets/crohme2019')
+CROHME_DIR = os.path.expanduser('datasets/crohme2019')
 
 
 class Predictor(object):
@@ -132,22 +132,20 @@ def gen_rand_noise(n_node, dim, device):
 if __name__ == '__main__':
     from tqdm import tqdm
 
-    from train import parser
+    from train_image_generator import parser
     from data import imagenet_deprocess_batch
 
     args = parser.parse_args()
     p = Predictor(args=args,
                   gen_checkpoint_path='weight/layout_conv_sum2_new_with_model.pt',
                   box_checkpoint_path='weight/box_net_40000.pkl')
-    # p = Predictor(args=args, restore_path='weight/grid_sample_with_model.pt')
 
     # lg_dir = '100k_symlg'
     lg_dir = 'Train_symlg'
     os.makedirs(lg_dir + '_results', exist_ok=True)
     os.makedirs(lg_dir + '_layouts_pred', exist_ok=True)
     os.makedirs(lg_dir + '_layouts_enh', exist_ok=True)
-    for idx, symlg in enumerate(tqdm(os.listdir(lg_dir))):
-        try:
+    for idx, symlg in enumerate(tqdm(sorted(os.listdir(lg_dir))[:20])):
             path = os.path.join(lg_dir, symlg)
             res = p.predict([path])
             box_pred = view_box(res[3].detach())
@@ -160,50 +158,3 @@ if __name__ == '__main__':
             im1 = im1.permute(1, 2, 0)
             Image.fromarray(im1.numpy()).save(os.path.join(lg_dir + '_results', symlg.split('.')[0] + '.png'))
             Image.fromarray(box_pred.numpy()).save(os.path.join(lg_dir + '_layouts_pred', symlg.split('.')[0] + '.png'))
-            # Image.fromarray(box_pred_enh.numpy()).save(os.path.join(lg_dir + '_layouts_enh', symlg.split('.')[0] + '.png'))
-        except:
-            pass
-
-    # viewer = ResultViewer()
-    # # viewer('layout_conv_up_no_model.pt')
-    # viewer('layout_conv_sum2_with_model.pt')
-
-    # objs = torch.tensor([65, 97, 10, 10, 18, 66, 98,  3,  5, 69, 98])
-    # offset = 0.2
-    # # boxes = torch.tensor([[0.0000, 0.4142, 0.2059, 0.5264],
-    # #     [0.5816, 0.5514 + offset, 0.6442, 0.6117 + offset],
-    # #     [0.8573, 0.5242 + offset, 0.9030, 0.5680 + offset],
-    # #     [0.6330, 0.5184 + offset, 0.6767, 0.5527 + offset],
-    # #     [0.3710, 0.4470, 0.4298, 0.4811],
-    # #     [0.5039, 0.4771, 0.9760, 0.6321],
-    # #     [0.6423, 0.3602, 0.7210, 0.4632],
-    # #     [0.7030, 0.5658 + offset, 0.7609, 0.6236 + offset],
-    # #     [0.5187, 0.4604 + offset, 0.9838, 0.4784 + offset],
-    # #     [0.2592, 0.3944, 0.3285, 0.4943],
-    # #     [0.7897, 0.5511 + offset, 0.8559, 0.6711 + offset]])
-    #
-    # boxes = torch.tensor([[0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0.4, 0.4, 0.6, 0.6],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1],
-    #     [0., 0.1, 0., 0.1]])
-    #
-    #
-    #
-    # res = p.forward(os.path.join('test_symlgs', '91_user0.lg'), boxes_gt=boxes)
-    # img = imagenet_deprocess_batch(res[2].detach())
-    # im1 = img[0].squeeze()
-    # im1 = im1.permute(1, 2, 0)
-    # Image.fromarray(im1.numpy()).show()
-
-
-
-
-
-

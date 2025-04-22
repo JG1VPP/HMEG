@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmengine import Registry, MODELS
+from mmengine import MODELS, Registry
 
 
 def bce_loss(input, target):

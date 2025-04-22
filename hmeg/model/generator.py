@@ -175,8 +175,8 @@ class Sg2ImModel(nn.Module):
             layout = torch.cat([layout, layout_noise], dim=1)
         img_64, img_128, img_256 = self.refinement_net(layout)
         return (
-            img_64,
-            img_128,
+            #img_64,
+            #img_128,
             img_256,
             boxes_pred,
             masks_pred,

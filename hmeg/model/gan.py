@@ -1,3 +1,4 @@
+import torch
 from mmengine import MODELS
 from mmengine.model import BaseModel
 

@@ -1,20 +1,29 @@
-from mmengine import MODELS, build_from_cfg
+from mmengine import MODELS
 from mmengine.model import BaseModel
-
-from hmeg.model.losses import LOSSES
 
 
 @MODELS.register_module()
 class GAN(BaseModel):
-    def __init__(self, gen, img, obj, gen_loss, img_loss, obj_loss):
+    def __init__(
+        self,
+        gen,
+        img,
+        obj,
+        loss_gen,
+        loss_img,
+        loss_obj,
+    ):
         super().__init__()
-        self.gen = build_from_cfg(gen, MODELS)
-        self.img = build_from_cfg(img, MODELS)
-        self.obj = build_from_cfg(obj, MODELS)
 
-        self.gen_loss = build_from_cfg(gen_loss, LOSSES)
-        self.img_loss = build_from_cfg(img_loss, LOSSES)
-        self.obj_loss = build_from_cfg(obj_loss, LOSSES)
+        # modules
+        self.gen = MODELS.build(gen)
+        self.img = MODELS.build(img)
+        self.obj = MODELS.build(obj)
+
+        # losses
+        self.loss_gen = MODELS.build(loss_gen)
+        self.loss_img = MODELS.build(loss_img)
+        self.loss_obj = MODELS.build(loss_obj)
 
     def forward(self, batch):
         return self.gen(batch)

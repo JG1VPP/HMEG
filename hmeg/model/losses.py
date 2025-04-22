@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmengine import Registry
-
-LOSSES = Registry("LOSSES")
+from mmengine import Registry, MODELS
 
 
 def bce_loss(input, target):
@@ -39,7 +37,7 @@ def _make_targets(x, y):
     return torch.full_like(x, y)
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class gan_g_loss(nn.Module):
     def forward(scores_fake):
         """
@@ -55,7 +53,7 @@ class gan_g_loss(nn.Module):
         return bce_loss(scores_fake, y_fake)
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class gan_d_loss(nn.Module):
     def forward(scores_real, scores_fake):
         """
@@ -77,7 +75,7 @@ class gan_d_loss(nn.Module):
         return loss_real + loss_fake
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class wgan_g_loss(nn.Module):
     def forward(scores_fake):
         """
@@ -90,7 +88,7 @@ class wgan_g_loss(nn.Module):
         return -scores_fake.mean()
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class wgan_d_loss(nn.Module):
     def forward(scores_real, scores_fake):
         """
@@ -104,7 +102,7 @@ class wgan_d_loss(nn.Module):
         return scores_fake.mean() - scores_real.mean()
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class lsgan_g_loss(nn.Module):
     def forward(scores_fake):
         if scores_fake.dim() > 1:
@@ -113,7 +111,7 @@ class lsgan_g_loss(nn.Module):
         return F.mse_loss(scores_fake.sigmoid(), y_fake)
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class lsgan_d_loss(nn.Module):
     def forward(scores_real, scores_fake):
         assert scores_real.size() == scores_fake.size()

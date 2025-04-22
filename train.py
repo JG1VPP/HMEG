@@ -1,6 +1,7 @@
 import torch
 from mmcv import TRANSFORMS  # noqa
-from mmengine import Config
+from mmengine import MODELS, Config
+from mmengine.optim import build_optim_wrapper
 from mmengine.runner import Runner
 
 import hmeg  # noqa
@@ -9,10 +10,6 @@ if __name__ == "__main__":
     config = Config.fromfile("config.py")
     runner = Runner.from_cfg(config)
     print(next(iter(runner.train_dataloader)))
-    print(runner.model)
-    print(runner.model.gen_loss)
-    print(runner.model.img_loss)
-    print(runner.model.obj_loss)
 
     runner.train()
 

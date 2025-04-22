@@ -262,9 +262,9 @@ model = dict(
         padding="valid",
         object_size=32,
     ),
-    gen_loss=dict(type="gan_g_loss"),
-    img_loss=dict(type="gan_d_loss"),
-    obj_loss=dict(type="gan_d_loss"),
+    loss_gen=dict(type="gan_g_loss"),
+    loss_img=dict(type="gan_d_loss"),
+    loss_obj=dict(type="gan_d_loss"),
 )
 
 train_dataloader = dict(
@@ -293,55 +293,14 @@ train_dataloader = dict(
 
 train_cfg = dict(by_epoch=True, max_epochs=1000, val_interval=1)
 
-optim_wrapper = dict(optimizer=dict(type="Adam", lr=1e-4))
+optim_wrapper = dict(
+    constructor="MultiOptimWrapperConstructor",
+    gen=dict(optimizer=dict(type="Adam", lr=1e-4)),
+    img=dict(optimizer=dict(type="Adam", lr=1e-4)),
+    obj=dict(optimizer=dict(type="Adam", lr=1e-4)),
+)
 
 work_dir = "results"
 
 # deprecate! use load_from instead
 ckpt = "weight/layout_conv_sum2_new_with_model.pt"
-
-#
-#
-## Switch the generator to eval mode after this many iterations
-# parser.add_argument("--eval_mode_after", default=100000, type=int)
-#
-## Dataset options common to both VG and COCO
-# parser.add_argument("--num_train_samples", default=None, type=int)
-# parser.add_argument("--num_val_samples", default=1024, type=int)
-# parser.add_argument("--shuffle_val", default=True, type=bool_flag)
-# parser.add_argument("--loader_num_workers", default=4, type=int)
-# parser.add_argument("--include_relationships", default=True, type=bool_flag)
-#
-## Generator options
-# parser.add_argument("--use_boxes_pred_after", default=-1, type=int)
-#
-## Generator losses
-# parser.add_argument("--mask_loss_weight", default=0, type=float)
-# parser.add_argument("--l1_pixel_loss_weight", default=1.0, type=float)
-# parser.add_argument("--bbox_pred_loss_weight", default=10, type=float)
-# parser.add_argument("--predicate_pred_loss_weight", default=0, type=float)  # DEPRECATED
-#
-## Generic discriminator options
-# parser.add_argument("--discriminator_loss_weight", default=0.01, type=float)
-# parser.add_argument("--gan_loss_type", default="gan")
-#
-## Object discriminator
-# parser.add_argument(
-#    "--d_obj_weight", default=1.0, type=float
-# )  # multiplied by d_loss_weight
-# parser.add_argument("--ac_loss_weight", default=0.1, type=float)
-#
-## Image discriminator
-# parser.add_argument(
-#    "--d_img_weight", default=1.0, type=float
-# )  # multiplied by d_loss_weight
-#
-## Output options
-# parser.add_argument("--timing", default=False, type=bool_flag)
-# parser.add_argument("--output_dir", default=os.getcwd())
-# parser.add_argument("--checkpoint_name", default="layout_conv_sum2_new")
-# parser.add_argument("--checkpoint_start_from", default=None)
-# parser.add_argument("--restore_from_checkpoint", default=False, type=bool_flag)
-#
-#
-# CROHME_DIR = os.path.expanduser("datasets/crohme2019")

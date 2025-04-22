@@ -1,5 +1,3 @@
-import torch
-import torch.nn as nn
 from mmengine import MODELS
 from mmengine.model import BaseModel
 from mmengine import build_from_cfg

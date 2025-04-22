@@ -63,7 +63,7 @@ class BBoxNet(nn.Module):
         noise,
         obj_to_img=None,
     ):
-        O, T = objs.size(0), triples.size(0)
+        O, _ = objs.size(0), triples.size(0)
         s, p, o = triples.chunk(3, dim=1)  # All have shape (T, 1)
         s, p, o = [x.squeeze(1) for x in [s, p, o]]  # Now have shape (T,)
         edges = torch.stack([s, o], dim=1)  # Shape is (T, 2)

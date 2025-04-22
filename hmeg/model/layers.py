@@ -100,7 +100,7 @@ class ResidualBlock(nn.Module):
         shortcut = x
         if P == 0:
             shortcut = x[:, :, P:-P, P:-P]
-        y = self.net(x)
+    #    _ = self.net(x)
         return shortcut + self.net(x)
 
 

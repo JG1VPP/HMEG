@@ -281,9 +281,11 @@ train_dataloader = dict(
             dict(type="Resize", scale=(256, 256), keep_ratio=True),
             dict(type="Pad", size=(256, 256), pad_val=1),
             dict(type="ImageToTensor", keys=["img"]),
+            dict(type="LabelGraph", h=256, w=256),
         ],
         test_mode=False,
     ),
+    collate_fn=dict(type="crohme_collate_fn"),
 )
 
 train_cfg = dict(by_epoch=True, max_epochs=1000, val_interval=1)

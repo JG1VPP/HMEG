@@ -117,7 +117,7 @@ class Sg2ImModel(nn.Module):
         - boxes_gt: FloatTensor of shape (O, 4) giving boxes to use for computing
           the spatial layout; if not given then use predicted boxes.
         """
-        O, T = objs.size(0), triples.size(0)
+        O, _ = objs.size(0), triples.size(0)
         s, p, o = triples.chunk(3, dim=1)  # All have shape (T, 1)
         s, p, o = [x.squeeze(1) for x in [s, p, o]]  # Now have shape (T,)
         edges = torch.stack([s, o], dim=1)  # Shape is (T, 2)
@@ -274,7 +274,6 @@ class Sg2ImModel(nn.Module):
 
     def forward_lg1(self, lg_path, boxes=None):
         objs, triples, obj_to_img = [], [], []
-        obj_offset = 0
         lg_objs, lg_triples = self.crohme2graph.convert(lg_path)
         for lg_obj in lg_objs:
             objs.append(lg_obj)

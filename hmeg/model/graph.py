@@ -59,7 +59,7 @@ class GraphTripleConv(nn.Module):
         """
         dtype, device = obj_vecs.dtype, obj_vecs.device
         O, T = obj_vecs.size(0), pred_vecs.size(0)
-        Din, H, Dout = self.input_dim, self.hidden_dim, self.output_dim
+        _, H, Dout = self.input_dim, self.hidden_dim, self.output_dim
 
         # Break apart indices for subjects and objects; these have shape (T,)
         s_idx = edges[:, 0].contiguous()

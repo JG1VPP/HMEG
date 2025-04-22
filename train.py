@@ -10,6 +10,11 @@ if __name__ == "__main__":
     runner = Runner.from_cfg(config)
     print(next(iter(runner.train_dataloader)))
     print(runner.model)
+    print(runner.model.gen_loss)
+    print(runner.model.img_loss)
+    print(runner.model.obj_loss)
 
-    ckpt = torch.load(config.ckpt)
-    runner.model.gen.load_state_dict(ckpt["model_state"])
+    runner.train()
+
+#    ckpt = torch.load(config.ckpt)
+#    runner.model.gen.load_state_dict(ckpt["model_state"])

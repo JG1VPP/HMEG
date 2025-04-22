@@ -1,5 +1,4 @@
 import torch
-
 from mmengine import FUNCTIONS
 
 
@@ -27,23 +26,23 @@ def crohme_collate_fn(batch):
 
     all_object_to_img = []
     all_triple_to_img = []
-    
+
     obj_offset = 0
-    
+
     for n, sample in enumerate(batch):
-        all_imgs.append(sample['img'])
+        all_imgs.append(sample["img"])
 
-        objs = sample['objs']
-        bbox = sample['bbox']
+        objs = sample["objs"]
+        bbox = sample["bbox"]
 
-        triple = sample['triple'].clone()
-        layout = sample['layout']
+        triple = sample["triple"].clone()
+        layout = sample["layout"]
 
         triple[:, 0::2] += obj_offset
 
         all_objs.append(objs)
         all_bbox.append(bbox)
-        
+
         all_layouts.append(layout)
         all_triples.append(triple)
 

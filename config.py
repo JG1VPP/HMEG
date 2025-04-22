@@ -262,6 +262,9 @@ model = dict(
         padding="valid",
         object_size=32,
     ),
+    gen_loss=dict(type="gan_g_loss"),
+    img_loss=dict(type="gan_d_loss"),
+    obj_loss=dict(type="gan_d_loss"),
 )
 
 train_dataloader = dict(

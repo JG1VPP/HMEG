@@ -1,5 +1,6 @@
 import torch
-from mmcv.transforms import BaseTransform, TRANSFORMS
+from mmcv.transforms import TRANSFORMS, BaseTransform
+
 from hmeg.model.layout import boxes_to_layout_matrix
 
 

@@ -49,19 +49,15 @@ class GAN(BaseModel):
 
         return loss
 
-    def train_img(self, optim, imgs, **kwargs):
+    def train_img(self, optim, imgs, objs, bbox, triples, layouts, obj_to_img, triple_to_img):
         with torch.no_grad():
-            fake, bbox, mask, scores, layout = self.gen(**kwargs)
+            fake, bbox, mask, scores, layout = self.gen(objs, triples, obj_to_img, boxes_gt=bbox)
 
-        # torch.Size([8, 3, 256, 256]) torch.Size([1, 3, 256, 256]) torch.Size([71, 4]) torch.Size([71, 16, 16]) torch.Size([983, 9]) torch.Size([71, 1, 64, 64])
-        print(imgs.shape, fake.shape, bbox.shape, mask.shape, scores.shape, layout.shape)
+        print(fake.shape, imgs.shape)
 
         scores_fake = self.img(fake)
         scores_real = self.img(imgs)
         
-        # torch.Size([1, 3, 256, 256]) torch.Size([8, 3, 256, 256]) torch.Size([1, 256, 30, 30]) torch.Size([8, 256, 30, 30])
-        print(fake.shape, imgs.shape, scores_fake.shape, scores_real.shape)
-
         loss = dict(
             img=self.loss_img(scores_real, scores_fake),
         )
@@ -69,9 +65,9 @@ class GAN(BaseModel):
         optim.update_params(loss)
         return loss
 
-    def train_obj(self, optim, imgs, **kwargs):
+    def train_obj(self, optim, imgs, objs, bbox, triples, layouts, obj_to_img, triple_to_img):
         with torch.no_grad():
-            fake, bbox, mask, scores, layout = self.gen(**kwargs)
+            fake, bbox, mask, scores, layout = self.gen(objs, triples, obj_to_img, boxes_gt=bbox)
 
         scores_fake, ac_loss_fake = self.obj(fake, objs, bbox, obj_to_img)
         scores_real, ac_loss_real = self.obj(imgs, objs, bbox, obj_to_img)
@@ -85,8 +81,8 @@ class GAN(BaseModel):
         optim.update_params(loss)
         return loss
 
-    def train_gen(self, optim, imgs, **kwargs):
-        fake, bbox, mask, scores, layout = self.gen(**kwargs)
+    def train_gen(self, optim, imgs, objs, bbox, triples, layouts, obj_to_img, triple_to_img):
+        fake, bbox, mask, scores, layout = self.gen(objs, triples, obj_to_img, boxes_gt=bbox)
 
         scores_fake_obj, ac_loss_fake = self.obj(fake)
         scores_fake_img = self.img(fake)

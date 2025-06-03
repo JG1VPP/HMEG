@@ -103,7 +103,7 @@ class Sg2ImModel(nn.Module):
         layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
         return nn.Sequential(*layers)
 
-    def forward(self, objs, triples, obj_to_img=None, boxes_gt=None, masks_gt=None, **kwargs):
+    def forward(self, objs, triples, obj_to_img=None, boxes_gt=None, masks_gt=None):
         """
         Required Inputs:
         - objs: LongTensor of shape (O,) giving categories for all objects
@@ -156,6 +156,7 @@ class Sg2ImModel(nn.Module):
         grid = _boxes_to_region(layout_boxes, 64, 64)
         grid = grid.permute(0, 3, 1, 2)
         # TODO grid 2 layout_matrix
+        print(grid.shape, obj_vecs.shape, obj_to_img)
         layout, layout_matrix_32 = self.layout_net(grid, obj_vecs, obj_to_img)
         # print(torch.sum(layout_matrix_32.view(O, -1), dim=-1))
         # print(obj_vecs[5])

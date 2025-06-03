@@ -57,6 +57,6 @@ def crohme_collate_fn(batch):
         bbox=torch.cat(all_bbox),
         triples=torch.cat(all_triples),
         layouts=torch.cat(all_layouts),
-        object_to_img=torch.cat(all_object_to_img),
+        obj_to_img=torch.cat(all_object_to_img),
         triple_to_img=torch.cat(all_triple_to_img),
     )

@@ -52,7 +52,7 @@ def crohme_collate_fn(batch):
         obj_offset += len(objs)
 
     return dict(
-        imgs=torch.cat(all_imgs),
+        imgs=torch.stack(all_imgs),
         objs=torch.cat(all_objs),
         bbox=torch.cat(all_bbox),
         triples=torch.cat(all_triples),

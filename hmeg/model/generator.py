@@ -103,7 +103,7 @@ class Sg2ImModel(nn.Module):
         layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
         return nn.Sequential(*layers)
 
-    def forward(self, objs, triples, obj_to_img=None, boxes_gt=None, masks_gt=None):
+    def forward(self, objs, triples, obj_to_img=None, boxes_gt=None, masks_gt=None, **kwargs):
         """
         Required Inputs:
         - objs: LongTensor of shape (O,) giving categories for all objects

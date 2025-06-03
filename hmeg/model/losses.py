@@ -39,7 +39,7 @@ def _make_targets(x, y):
 
 @MODELS.register_module()
 class gan_g_loss(nn.Module):
-    def forward(scores_fake):
+    def forward(self, scores_fake):
         """
         Input:
         - scores_fake: Tensor of shape (N,) containing scores for fake samples
@@ -55,7 +55,7 @@ class gan_g_loss(nn.Module):
 
 @MODELS.register_module()
 class gan_d_loss(nn.Module):
-    def forward(scores_real, scores_fake):
+    def forward(self, scores_real, scores_fake):
         """
         Input:
         - scores_real: Tensor of shape (N,) giving scores for real samples
@@ -77,7 +77,7 @@ class gan_d_loss(nn.Module):
 
 @MODELS.register_module()
 class wgan_g_loss(nn.Module):
-    def forward(scores_fake):
+    def forward(self, scores_fake):
         """
         Input:
         - scores_fake: Tensor of shape (N,) containing scores for fake samples
@@ -90,7 +90,7 @@ class wgan_g_loss(nn.Module):
 
 @MODELS.register_module()
 class wgan_d_loss(nn.Module):
-    def forward(scores_real, scores_fake):
+    def forward(self, scores_real, scores_fake):
         """
         Input:
         - scores_real: Tensor of shape (N,) giving scores for real samples
@@ -104,7 +104,7 @@ class wgan_d_loss(nn.Module):
 
 @MODELS.register_module()
 class lsgan_g_loss(nn.Module):
-    def forward(scores_fake):
+    def forward(self, scores_fake):
         if scores_fake.dim() > 1:
             scores_fake = scores_fake.view(-1)
         y_fake = _make_targets(scores_fake, 1)
@@ -113,7 +113,7 @@ class lsgan_g_loss(nn.Module):
 
 @MODELS.register_module()
 class lsgan_d_loss(nn.Module):
-    def forward(scores_real, scores_fake):
+    def forward(self, scores_real, scores_fake):
         assert scores_real.size() == scores_fake.size()
         if scores_real.dim() > 1:
             scores_real = scores_real.view(-1)

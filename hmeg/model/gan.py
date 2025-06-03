@@ -36,11 +36,13 @@ class GAN(BaseModel):
 
         loss = {}
 
+        batch = {k: b.cuda() for k, b in batch.items()}
+
         with opt_img.optim_context(self.img):
             loss.update(self.train_img(opt_img, **batch))
 
         with opt_obj.optim_context(self.obj):
-            loss.update(self.train_obj(opt_objm**batch))
+            loss.update(self.train_obj(opt_obj, **batch))
 
         with opt_gen.optim_context(self.gen):
             loss.update(self.train_gen(opt_gen, **batch))
@@ -49,10 +51,16 @@ class GAN(BaseModel):
 
     def train_img(self, optim, imgs, **kwargs):
         with torch.no_grad():
-            fake, bbox, mask, scores, layout = self.gen(**batch)
+            fake, bbox, mask, scores, layout = self.gen(**kwargs)
+
+        # torch.Size([8, 3, 256, 256]) torch.Size([1, 3, 256, 256]) torch.Size([71, 4]) torch.Size([71, 16, 16]) torch.Size([983, 9]) torch.Size([71, 1, 64, 64])
+        print(imgs.shape, fake.shape, bbox.shape, mask.shape, scores.shape, layout.shape)
 
         scores_fake = self.img(fake)
         scores_real = self.img(imgs)
+        
+        # torch.Size([1, 3, 256, 256]) torch.Size([8, 3, 256, 256]) torch.Size([1, 256, 30, 30]) torch.Size([8, 256, 30, 30])
+        print(fake.shape, imgs.shape, scores_fake.shape, scores_real.shape)
 
         loss = dict(
             img=self.loss_img(scores_real, scores_fake),
@@ -63,7 +71,7 @@ class GAN(BaseModel):
 
     def train_obj(self, optim, imgs, **kwargs):
         with torch.no_grad():
-            fake, bbox, mask, scores, layout = self.gen(**batch)
+            fake, bbox, mask, scores, layout = self.gen(**kwargs)
 
         scores_fake, ac_loss_fake = self.obj(fake, objs, bbox, obj_to_img)
         scores_real, ac_loss_real = self.obj(imgs, objs, bbox, obj_to_img)
@@ -78,7 +86,7 @@ class GAN(BaseModel):
         return loss
 
     def train_gen(self, optim, imgs, **kwargs):
-        fake, bbox, mask, scores, layout = self.gen(**batch)
+        fake, bbox, mask, scores, layout = self.gen(**kwargs)
 
         scores_fake_obj, ac_loss_fake = self.obj(fake)
         scores_fake_img = self.img(fake)

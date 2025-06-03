@@ -46,8 +46,8 @@ def crohme_collate_fn(batch):
         all_layouts.append(layout)
         all_triples.append(triple)
 
-        all_object_to_img.append(torch.zeros(len(objs)).fill_(n))
-        all_triple_to_img.append(torch.zeros(len(triple)).fill_(n))
+        all_object_to_img.append(torch.zeros(len(objs)).int().fill_(n))
+        all_triple_to_img.append(torch.zeros(len(triple)).int().fill_(n))
 
         obj_offset += len(objs)
 

@@ -53,17 +53,15 @@ class GAN(BaseModel):
         with torch.no_grad():
             fake, bbox, mask, scores, layout = self.gen(objs, triples, obj_to_img, boxes_gt=bbox)
 
-        print(fake.shape, imgs.shape)
-
         scores_fake = self.img(fake)
         scores_real = self.img(imgs)
         
-        loss = dict(
-            img=self.loss_img(scores_real, scores_fake),
-        )
+        loss, log = self.parse_losses(dict(
+            loss_img=self.loss_img(scores_real, scores_fake),
+        ))
 
         optim.update_params(loss)
-        return loss
+        return log
 
     def train_obj(self, optim, imgs, objs, bbox, triples, layouts, obj_to_img, triple_to_img):
         with torch.no_grad():
@@ -72,26 +70,26 @@ class GAN(BaseModel):
         scores_fake, ac_loss_fake = self.obj(fake, objs, bbox, obj_to_img)
         scores_real, ac_loss_real = self.obj(imgs, objs, bbox, obj_to_img)
 
-        loss = dict(
-            obj=self.loss_obj(scores_real, scores_fake),
-            ac_real=ac_loss_real,
-            ac_fake=ac_loss_fake,
-        )
+        loss, log = self.parse_losses(dict(
+            loss_obj=self.loss_obj(scores_real, scores_fake),
+            loss_ac_real=ac_loss_real,
+            loss_ac_fake=ac_loss_fake,
+        ))
 
         optim.update_params(loss)
-        return loss
+        return log
 
     def train_gen(self, optim, imgs, objs, bbox, triples, layouts, obj_to_img, triple_to_img):
         fake, bbox, mask, scores, layout = self.gen(objs, triples, obj_to_img, boxes_gt=bbox)
 
-        scores_fake_obj, ac_loss_fake = self.obj(fake)
+        scores_fake_obj, ac_loss_fake = self.obj(fake, objs, bbox, obj_to_img)
         scores_fake_img = self.img(fake)
 
-        loss = dict(
-            gen_obj=self.loss_gen(scores_fake_obj),
-            gen_img=self.loss_gen(scores_fake_img),
-            gen_ac=ac_loss_fake,
-        )
+        loss, log = self.parse_losses(dict(
+            loss_gen_obj=self.loss_gen(scores_fake_obj),
+            loss_gen_img=self.loss_gen(scores_fake_img),
+            loss_gen_ac=ac_loss_fake,
+        ))
 
         optim.update_params(loss)
-        return loss
+        return log

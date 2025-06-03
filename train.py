@@ -9,6 +9,6 @@ import hmeg  # noqa
 if __name__ == "__main__":
     config = Config.fromfile("config.py")
     runner = Runner.from_cfg(config)
-    ckpt = torch.load(config.ckpt)
-    runner.model.gen.load_state_dict(ckpt["model_state"])
+#    ckpt = torch.load(config.ckpt)
+#    runner.model.gen.load_state_dict(ckpt["model_state"])
     runner.train()
